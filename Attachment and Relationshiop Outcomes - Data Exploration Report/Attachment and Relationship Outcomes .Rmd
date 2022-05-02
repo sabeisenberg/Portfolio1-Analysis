@@ -99,6 +99,8 @@ dat_layperson <- dat_layperson |>
 write_csv(dat_layperson, "dat_layperson.csv")
 
 ```
+
+
 ## Fitting models 
 
 Below, I fit models to check for some of the outcome variables (satisfaction, mutuality, caring, and core similarity) predicted by attachment avoidance, anxiety, and an interaction between the two. I ran the models and checked the parameters for each. 
@@ -137,8 +139,59 @@ According to the parameters, anxious attachment style is a negative predictor of
 
 ### plots
 
+While I could have done estimate expectations, I am not as familiar with interpreting interactions with two continuous variables. Instead, I split the anxious term into segments of low and high, as below, and saved it into a new data file to use for the plots
+
+```{r splitting anxious into 2}
+describe_distribution(dat_layperson$AnxiousTotalMean)
 
 
+  
+dat_layperson1 <- dat_layperson |>
+  mutate(
+    AnxiousTotalMeanInt = case_when(
+      AnxiousTotalMean <= 1.39 ~ "low anxiety",
+      AnxiousTotalMean >= 4.61 ~ "high anxiety"
+    )
+  )
+
+
+##Lower - 1.39
+##Higher - 4.61
+
+```
+
+
+```{r mod sat plot}
+plot_satisfaction <- dat_layperson1 |>
+  filter(!is.na(AnxiousTotalMeanInt)) |>
+  ggplot() +
+  aes(x = AvoidTotalMean, 
+      y = satisfaction_1, 
+      group = AnxiousTotalMeanInt, 
+      color = AnxiousTotalMeanInt) +
+  geom_point(shape=21,
+             color="darkgrey",
+             fill= "darkgrey", 
+             size=2, 
+             alpha = .5) +
+  geom_smooth(method=lm) +
+  scale_x_continuous(
+    name = "Attachment Avoidance" 
+  ) + 
+  scale_y_continuous(
+    name = "Influence of Satisfaction"
+  )
+
+plot_satisfaction
+
+ggsave("plot_satisfaction.pdf")
+
+```
+
+
+Caveat prior to explaining graphs - these graphs are estimates. I could have fit a spline or something more complicated to better understand the model, and then graphed the model in a way that told a more clear story, but that is something that will take more time and practice. My explanations for the graphs will be based on the raw data and estimates. 
+
+From the above graph, you can see that the negative relationship between attachment avoidance and perceived influence of satisfaction seems to only hold true for those low in attachment anxiety. It also seems that there as an opposite or increasing tend (however slight) when individuals with high attachment avoidance are also high in attachment anxiety. 
 
 ## Attachment predicting mutuality
 
@@ -172,6 +225,37 @@ print_md(params_mutuality)
 
 According to the parameters, anxious attachment style is a negative predictor of perception of mutuality's influence on relationship health. Every 1 unit increase in attachment anxiety corresponds to a -4.20 decrease in perceived healthiness of satisfaction. There was a moderately sized compatibility interval that does not include 0 [-7.38, -1.03], meaning there is evidence that this relationship would be seen in the population. Avoidant attachment style is also a negative predictor of perception of mutuality on relationship healthy. Every 1 unit increase in attachment avoidance corresponds to a -11.13 decrease in perceived healthiness of satisfaction. The compatibility interval [-15.89, -6.38] does not include 0, and we would not be surprised to see this relationship in the population. Interestingly, there was a significant interaction, CI [0.96, 3.42], that trended positively (2.19). Graphing this data will provide more information on the relationship. 
 
+### plot
+
+```{r mod mut plot}
+plot_mutuality <- dat_layperson1 |>
+  filter(!is.na(AnxiousTotalMeanInt)) |>
+  ggplot() +
+  aes(x = AvoidTotalMean, 
+      y = mutuality_1, 
+      group = AnxiousTotalMeanInt, 
+      color = AnxiousTotalMeanInt) +
+  geom_point(shape=21,
+             color="darkgrey",
+             fill= "darkgrey", 
+             size=2, 
+             alpha = .5) +
+  geom_smooth(method=lm) +
+  scale_x_continuous(
+    name = "Attachment Avoidance" 
+  ) + 
+  scale_y_continuous(
+    name = "Influence of Mutuality"
+  )
+
+plot_mutuality
+
+ggsave("plot_mutuality.pdf")
+```
+
+From the above graph, you can see that the negative relationship between attachment avoidance and influence of mutuality also seems to only hold for those who are low in anxiety. This, coupled with the graph for satisfaction, seems to insinuate that anxiety buffers the effect of avoidance. 
+
+
 ## Attachment predicting caring
 
 ### model 
@@ -204,6 +288,36 @@ print_md(params_caring)
 
 According to the parameters, anxious attachment style is a negative predictor of perception of caring's influence on relationship health. Every 1 unit increase in attachment anxiety corresponds to a -1.97 decrease in perceived healthiness of satisfaction. There was a moderately sized compatibility interval that does not include 0 [-3.81, -0.13], meaning there is evidence that this relationship would be seen in the population. Avoidant attachment style is also a negative predictor of perception of caring on relationship healthy. Every 1 unit increase in attachment avoidance corresponds to a -5.63 decrease in perceived healthiness of satisfaction. The compatibility interval [-8.41, -2.86] does not include 0, and we would not be surprised to see this relationship in the population. Interestingly, there was a significant interaction, CI [0.17, 1.61], that trended positively (0.37). Graphing this data will provide more information on the relationship. 
 
+### plot
+
+```{r mod caring plot}
+plot_caring <- dat_layperson1 |>
+  filter(!is.na(AnxiousTotalMeanInt)) |>
+  ggplot() +
+  aes(x = AvoidTotalMean, 
+      y = mutuality_1, 
+      group = AnxiousTotalMeanInt, 
+      color = AnxiousTotalMeanInt) +
+  geom_point(shape=21,
+             color="darkgrey",
+             fill= "darkgrey", 
+             size=2, 
+             alpha = .5) +
+  geom_smooth(method=lm) +
+  scale_x_continuous(
+    name = "Attachment Avoidance" 
+  ) + 
+  scale_y_continuous(
+    name = "Influence of Caring"
+  )
+
+plot_caring
+
+ggsave("plot_caring.pdf")
+```
+
+From the above graph, there is a similar pattern as the other two already, where the strong negative relationship is only holding for low anxiety participants. 
+
 ## Attachment predicting core similarities 
 
 ### model 
@@ -235,3 +349,36 @@ print_md(params_coresim)
 ### Findings
 
 According to the parameters, anxious attachment style is a negative predictor of perception of core similarities' influence on relationship health. Every 1 unit increase in attachment anxiety corresponds to a -2.30 decrease in perceived healthiness of core similarities. There was a moderately sized compatibility interval that does not include 0 [-4.55, -0.05], meaning there is evidence that this relationship would be seen in the population. Avoidant attachment style is also a negative predictor of perception of caring on relationship healthy. Every 1 unit increase in attachment avoidance corresponds to a -6.37 decrease in perceived healthiness of core similarities. The compatibility interval [-9.77, -2.96] does not include 0, and we would not be surprised to see this relationship in the population. Interestingly, there was a significant interaction, CI [0.36, 2.12], that trended positively (0.45). Graphing this data will provide more information on the relationship. 
+
+### plot
+
+```{r mod coresim plot}
+plot_coresim <- dat_layperson1 |>
+  filter(!is.na(AnxiousTotalMeanInt)) |>
+  ggplot() +
+  aes(x = AvoidTotalMean, 
+      y = coresim_1, 
+      group = AnxiousTotalMeanInt, 
+      color = AnxiousTotalMeanInt) +
+  geom_point(shape=21,
+             color="darkgrey",
+             fill= "darkgrey", 
+             size=2, 
+             alpha = .5) +
+  geom_smooth(method=lm) +
+  scale_x_continuous(
+    name = "Attachment Avoidance" 
+  ) + 
+  scale_y_continuous(
+    name = "Influence of Core Similarities"
+  )
+
+plot_coresim
+
+ggsave("plot_coresim.pdf")
+```
+
+
+Lastly, there is a similar pattern here (but seems less strong than the other graphs)
+
+This was exploratory data and we do not yet have hypotheses about why these interactions were seen. Also, there is a clear ceiling effect, where most participants rated qualities as making relationships healthy. 
