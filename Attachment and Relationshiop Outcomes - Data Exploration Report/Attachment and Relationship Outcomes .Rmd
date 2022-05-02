@@ -1,0 +1,237 @@
+---
+title: "Attachment and Healthy Relationship Outcomes"
+output: word_document
+date: '2022-05-02'
+---
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(tidytext)
+library(textdata)
+library(easystats)
+knitr::opts_chunk$set(echo = TRUE, include = TRUE, fig.width = 5, fig.height = 4, fig.align = "center")
+```
+
+
+```{r load and rename data}
+
+layperson <- haven::read_spss(
+  "Healthy Relationships with Prolific Demo 10.9.19.sav"
+)
+
+```
+
+# Layperson's perception of relationship health
+
+
+This is a project I did for the SPSP 2022 conference investigating the relationship between attachment style and relationship outcomes. I will walk you through the data analysis process.
+
+## Data wrangling 
+
+First, I mutated the data to clarify variable names and make them easier to work with. 
+
+
+```{r wrangle create new ECR variables}
+
+dat_layperson <- mutate(layperson, ECR1 = ECR_ecr1,
+                        ECR2 = ECR_ecr2,
+                        ECR3 = ECR_ecr3,
+                        ECR4 = ECR_ecr4,
+                        ECR5 = ECR_ecr5, 
+                        ECR6 = ECR_ecr6, 
+                        ECR7 = ECR_ecr7, 
+                        ECR8 = ECR_ecr8, 
+                        ECR9 = ECR_ecr9
+                        )
+```
+
+Then, I reverse scores the appropriate items. 
+
+```{r ECR reverse score}
+
+dat_layperson <- dat_layperson |>
+  mutate(ECR1 = 8 - ECR1, 
+         ECR2 = 8 - ECR2, 
+         ECR3 = 8 - ECR3, 
+         ECR4 = 8 - ECR4) 
+
+```
+
+I averaged the items across each category to get the total average scores for insecure attachment, avoidant attachment, and anxious attachment styles per participant. 
+
+```{r Sum ECR score}
+
+dat_layperson <- dat_layperson |>
+  mutate(InsecureTotalMean = (ECR1 + ECR2 + 
+           ECR3 + ECR4 + ECR5 + 
+           ECR6 + ECR7 + ECR8 + ECR9)/9) 
+    
+
+```
+
+```{r sum ECR for Avoid}
+
+dat_layperson <- dat_layperson |>
+  mutate(AvoidTotalMean = (ECR1 + ECR2 + 
+           ECR3 + ECR4 + ECR5 + ECR6)/6) 
+
+```
+
+```{r sum ECR for Anxious}
+
+dat_layperson <- dat_layperson |>
+  mutate(AnxiousTotalMean = (ECR7 + ECR8 + 
+           ECR9)/3)
+
+```
+
+Lastly I created an interaction the anxious and avoidant means. 
+
+```{r Anxious*Avoidant Mean}
+
+dat_layperson <- dat_layperson |> 
+  mutate(AvoidxAnxious = AnxiousTotalMean*AvoidTotalMean)
+
+```
+
+```{r save cleaned data output}
+
+write_csv(dat_layperson, "dat_layperson.csv")
+
+```
+## Fitting models 
+
+Below, I fit models to check for some of the outcome variables (satisfaction, mutuality, caring, and core similarity) predicted by attachment avoidance, anxiety, and an interaction between the two. I ran the models and checked the parameters for each. 
+
+## Attachment predicting satisfaction
+
+### model 
+
+```{r fit mod satisfaction}
+m_satisfaction <- lm(
+  satisfaction_1 ~ AnxiousTotalMean + AvoidTotalMean + AnxiousTotalMean*AvoidTotalMean, 
+  data = dat_layperson
+)
+``` 
+
+### parameters
+
+```{r parameters m_sat}
+
+params_satisfaction<- parameters( 
+  m_satisfaction, 
+  dispersion = TRUE, 
+  component = "all", 
+  test = NULL, 
+  diagnostic = NULL, 
+  prior = NULL 
+) 
+ 
+print(params_satisfaction) 
+
+```
+
+### Findings
+
+According to the parameters, anxious attachment style is a negative predictor of perception of satisfaction's influence on relationship health. Every 1 unit increase in attachment anxiety corresponds to a -2.35 decrease in perceived healthiness of satisfaction. There was a moderately sized compatibility interval that does not include 0 [-4.44, -.27], meaning there is evidence that this relationship would be seen in the population. Avoidant attachment style is also a negative predictor of perception of satisfaction on relationship healthy. Every 1 unit increase in attachment avoidance corresponds to a -6.47 decrease in perceived healthiness of satisfaction. The compatibility interval [-9.62, -3.32] does not include 0, and we would not be surprised to see this relationship in the population. Interestingly, there was a significant interaction, CI [0.22, 1.84], that trended positively (1.03). Graphing this data will provide more information on the relationship. 
+
+### plots
+
+
+
+
+## Attachment predicting mutuality
+
+### model 
+
+```{r fit mod mutuality}
+m_mutuality <- lm(
+  mutuality_1 ~ AnxiousTotalMean + AvoidTotalMean + AnxiousTotalMean*AvoidTotalMean, 
+  data = dat_layperson
+)
+``` 
+
+### parameters 
+
+```{r parameters m_mutuality}
+
+params_mutuality<- parameters( 
+  m_mutuality, 
+  dispersion = TRUE, 
+  component = "all", 
+  test = NULL, 
+  diagnostic = NULL, 
+  prior = NULL 
+) 
+ 
+print_md(params_mutuality) 
+
+```
+
+### Findings
+
+According to the parameters, anxious attachment style is a negative predictor of perception of mutuality's influence on relationship health. Every 1 unit increase in attachment anxiety corresponds to a -4.20 decrease in perceived healthiness of satisfaction. There was a moderately sized compatibility interval that does not include 0 [-7.38, -1.03], meaning there is evidence that this relationship would be seen in the population. Avoidant attachment style is also a negative predictor of perception of mutuality on relationship healthy. Every 1 unit increase in attachment avoidance corresponds to a -11.13 decrease in perceived healthiness of satisfaction. The compatibility interval [-15.89, -6.38] does not include 0, and we would not be surprised to see this relationship in the population. Interestingly, there was a significant interaction, CI [0.96, 3.42], that trended positively (2.19). Graphing this data will provide more information on the relationship. 
+
+## Attachment predicting caring
+
+### model 
+
+```{r fit mod caring}
+m_caring <- lm(
+  caring_1 ~ AnxiousTotalMean + AvoidTotalMean + AnxiousTotalMean*AvoidTotalMean, 
+  data = dat_layperson
+)
+``` 
+
+### parameters
+
+```{r parameters m_caring}
+
+params_caring <- parameters( 
+  m_caring, 
+  dispersion = TRUE, 
+  component = "all", 
+  test = NULL, 
+  diagnostic = NULL, 
+  prior = NULL 
+) 
+ 
+print_md(params_caring) 
+
+```
+
+### Findings
+
+According to the parameters, anxious attachment style is a negative predictor of perception of caring's influence on relationship health. Every 1 unit increase in attachment anxiety corresponds to a -1.97 decrease in perceived healthiness of satisfaction. There was a moderately sized compatibility interval that does not include 0 [-3.81, -0.13], meaning there is evidence that this relationship would be seen in the population. Avoidant attachment style is also a negative predictor of perception of caring on relationship healthy. Every 1 unit increase in attachment avoidance corresponds to a -5.63 decrease in perceived healthiness of satisfaction. The compatibility interval [-8.41, -2.86] does not include 0, and we would not be surprised to see this relationship in the population. Interestingly, there was a significant interaction, CI [0.17, 1.61], that trended positively (0.37). Graphing this data will provide more information on the relationship. 
+
+## Attachment predicting core similarities 
+
+### model 
+
+```{r fit mod core sim}
+m_coresim <- lm(
+  coresim_1 ~ AnxiousTotalMean + AvoidTotalMean + AnxiousTotalMean*AvoidTotalMean, 
+  data = dat_layperson
+)
+``` 
+
+### parameters
+
+```{r parameters m_coresim}
+
+params_coresim <- parameters( 
+  m_coresim, 
+  dispersion = TRUE, 
+  component = "all", 
+  test = NULL, 
+  diagnostic = NULL, 
+  prior = NULL 
+) 
+ 
+print_md(params_coresim) 
+
+```
+
+### Findings
+
+According to the parameters, anxious attachment style is a negative predictor of perception of core similarities' influence on relationship health. Every 1 unit increase in attachment anxiety corresponds to a -2.30 decrease in perceived healthiness of core similarities. There was a moderately sized compatibility interval that does not include 0 [-4.55, -0.05], meaning there is evidence that this relationship would be seen in the population. Avoidant attachment style is also a negative predictor of perception of caring on relationship healthy. Every 1 unit increase in attachment avoidance corresponds to a -6.37 decrease in perceived healthiness of core similarities. The compatibility interval [-9.77, -2.96] does not include 0, and we would not be surprised to see this relationship in the population. Interestingly, there was a significant interaction, CI [0.36, 2.12], that trended positively (0.45). Graphing this data will provide more information on the relationship. 
